@@ -36,6 +36,10 @@ static bool switching;
 static struct {
   bool present, ready, pin_set, rejected;
   uint8_t point[65];
+  bool usb_host;
+  int usb_devices;
+  uint16_t vid, pid;
+  char usb_detail[96], open_error[128];
 } token;
 extern unsigned char hyp_cert[], hyp_key[];
 extern char hyp_fingerprint[];
@@ -62,6 +66,19 @@ void hyp_web_publish(bool p, bool r, bool pin, bool rejected,
   token.pin_set = pin;
   token.rejected = rejected;
   memcpy(token.point, point, 65);
+  UNLOCK();
+}
+void hyp_web_publish_diag(bool host, int devices, uint16_t vid, uint16_t pid,
+                          const char *usb_detail, const char *open_error) {
+  if (!mu)
+    return;
+  LOCK();
+  token.usb_host = host;
+  token.usb_devices = devices;
+  token.vid = vid;
+  token.pid = pid;
+  snprintf(token.usb_detail, sizeof(token.usb_detail), "%s", usb_detail ? usb_detail : "");
+  snprintf(token.open_error, sizeof(token.open_error), "%s", open_error ? open_error : "");
   UNLOCK();
 }
 bool hyp_admin_set(const char *p) {
@@ -235,6 +252,20 @@ static cJSON *status_json(void) {
                                         : "absent");
   cJSON_AddBoolToObject(t, "pin_set", token.pin_set);
   cJSON_AddBoolToObject(t, "pin_rejected", token.rejected);
+  cJSON *u = cJSON_AddObjectToObject(t, "usb");
+  cJSON_AddBoolToObject(u, "host", token.usb_host);
+  cJSON_AddNumberToObject(u, "devices", token.usb_devices);
+  if (token.vid || token.pid) {
+    char id[10];
+    snprintf(id, sizeof(id), "%04x:%04x", token.vid, token.pid);
+    cJSON_AddStringToObject(u, "id", id);
+  } else
+    cJSON_AddNullToObject(u, "id");
+  cJSON_AddStringToObject(u, "detail", token.usb_detail);
+  if (token.open_error[0] && !token.ready)
+    cJSON_AddStringToObject(t, "error", token.open_error);
+  else
+    cJSON_AddNullToObject(t, "error");
   if (token.ready) {
     char h[67];
     const char *hex = "0123456789abcdef";

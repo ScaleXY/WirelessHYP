@@ -65,7 +65,7 @@ static void handle(char *line) {
     } else if(request.op==OP_STATUS) {
         bool attached=present(NULL);
         if(service.ready&&service.generation!=generation(NULL)) signer_invalidate(&service);
-        proto_status(out,sizeof(out),&request,attached?(service.ready?"ready":"present"):"absent",service.pin_set,service.rejected);
+        proto_status(out,sizeof(out),&request,attached?(service.ready?"ready":"present"):"absent",service.pin_set,service.rejected,usb_ok?ccid_host_detail():"USB host failed to start");
     } else {
         int64_t start=esp_timer_get_time();
         r=signer_run(&service,request.op==OP_SIGN?request.digest:NULL,sig);
@@ -109,7 +109,7 @@ void app_main(void) {
     usb_ok=psa_crypto_init()==PSA_SUCCESS&&ccid_host_init()==0;
     if(!usb_ok) ESP_LOGE("signer","USB/crypto init failed");
     if(storage_ok) hyp_web_init();
-    bool announced=false;int64_t next_open=0;
+    bool announced=false;int64_t next_open=0;int open_err=0;
     for(;;) {
         if(usb_ok) ccid_host_poll();
         if(service.ready&&generation(NULL)!=service.generation) signer_invalidate(&service);
@@ -121,9 +121,16 @@ void app_main(void) {
         }
         if(!service.rejected) announced=false;
         if(!service.ready&&!service.rejected&&service.pin_set&&esp_timer_get_time()>=next_open) {
-            signer_open(&service);next_open=esp_timer_get_time()+1000000;
+            open_err=signer_open(&service);next_open=esp_timer_get_time()+1000000;
         }
         hyp_web_publish(present(NULL),service.ready,service.pin_set,service.rejected,service.point);
+        {
+            bool host=false;int devs=0;uint16_t vid=0,pid=0;char msg[128];
+            if(usb_ok) ccid_host_diag(&host,&devs,&vid,&pid);
+            const char *oe=service.ready||!open_err?NULL:
+                (open_err==EP_STORAGE&&!service.pin_set)?"PIN not provisioned; use set_pin":detail(open_err,msg);
+            hyp_web_publish_diag(host,devs,vid,pid,usb_ok?ccid_host_detail():"USB host failed to start",oe);
+        }
         vTaskDelay(pdMS_TO_TICKS(5));
     }
 }

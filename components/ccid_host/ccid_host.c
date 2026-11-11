@@ -15,6 +15,7 @@ static struct {
     uint32_t features,max_message,generation;unsigned level;
     uint8_t stream[CCID_CAP];size_t buffered;ccid_t1 t1;
     char detail[96];
+    bool installed;int devices;uint16_t vid,pid;
 } h;
 static int failure(const char *msg) {snprintf(h.detail,sizeof(h.detail),"%s",msg);return -1;}
 const char *ccid_host_detail(void) {return h.detail;}
@@ -35,6 +36,7 @@ int ccid_host_init(void) {
     usb_host_client_config_t cfg={.max_num_event_msg=8,.async={.client_event_callback=event}};
     if(usb_host_client_register(&cfg,&h.client)!=ESP_OK) return failure("USB client registration failed");
     if(usb_host_transfer_alloc(CCID_CAP,0,&h.transfer)!=ESP_OK) return failure("USB transfer allocation failed");
+    h.installed=true;failure("USB host ready, no device yet");
     return 0;
 }
 void ccid_host_close(void) {
@@ -58,11 +60,14 @@ int ccid_host_open(void) {
     if(h.busy) return failure("USB transfer cancellation pending");
     uint8_t addresses[16];int count=0;
     if(usb_host_device_addr_list_fill(16,addresses,&count)!=ESP_OK) return failure("USB device list failed");
+    h.devices=count;h.vid=h.pid=0;int opened=0;
     for(int i=0;i<count;i++) {
         usb_device_handle_t dev;
         if(usb_host_device_open(h.client,addresses[i],&dev)!=ESP_OK) continue;
+        opened++;
         const usb_device_desc_t *dd=NULL;
         usb_host_get_device_descriptor(dev,&dd);
+        if(dd) {h.vid=dd->idVendor;h.pid=dd->idProduct;}
         if(!dd||dd->idVendor!=0x2ccf||dd->idProduct!=0x080a) {usb_host_device_close(h.client,dev);continue;}
         const usb_config_desc_t *cd=NULL;
         if(usb_host_get_active_config_descriptor(dev,&cd)!=ESP_OK) {usb_host_device_close(h.client,dev);continue;}
@@ -93,7 +98,13 @@ int ccid_host_open(void) {
         h.dev=dev;h.claimed=true;h.gone=false;h.seq=0;h.buffered=0;h.generation++;
         snprintf(h.detail,sizeof(h.detail),"CCID level %u",h.level);return 0;
     }
-    return failure("no HYP2003 token present");
+    if(!count) return failure("no USB device detected: check 5 V on VBUS, the OTG cable and the native USB port");
+    if(!opened) return failure("USB device detected but could not be opened");
+    snprintf(h.detail,sizeof(h.detail),"USB device %04x:%04x is not a HYP2003 (2ccf:080a)",h.vid,h.pid);
+    return -1;
+}
+void ccid_host_diag(bool *installed,int *devices,uint16_t *vid,uint16_t *pid) {
+    *installed=h.installed;*devices=h.devices;*vid=h.vid;*pid=h.pid;
 }
 bool ccid_host_present(void) {return ccid_host_open()==0;}
 static int bulk(uint8_t ep,uint8_t *data,size_t n,size_t *actual,int64_t deadline) {

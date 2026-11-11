@@ -113,8 +113,16 @@ int proto_signature(char *out,size_t n,const proto_request *r,const uint8_t sig[
     char id[48],a[67],b[67];prefix(id,r);proto_hex(sig,32,a);proto_hex(sig+32,32,b);
     return snprintf(out,n,"{%s\"r\":\"%s\",\"s\":\"%s\",\"ms\":%.3f}",id,a,b,ms);
 }
-int proto_status(char *out,size_t n,const proto_request *r,const char *token,bool pin_set,bool rejected) {
-    char id[48];prefix(id,r);return snprintf(out,n,"{%s\"token\":\"%s\",\"pin_set\":%s,\"pin_rejected\":%s}",id,token,pin_set?"true":"false",rejected?"true":"false");
+int proto_status(char *out,size_t n,const proto_request *r,const char *token,bool pin_set,bool rejected,const char *usb) {
+    char id[48],esc[200];size_t k=0;prefix(id,r);
+    for(const char *s=usb?usb:"";*s&&k+7<sizeof(esc);s++) {
+        unsigned char c=(unsigned char)*s;
+        if(c=='"'||c=='\\') {esc[k++]='\\';esc[k++]=(char)c;}
+        else if(c<0x20) k+=(size_t)snprintf(esc+k,sizeof(esc)-k,"\\u%04x",c);
+        else esc[k++]=(char)c;
+    }
+    esc[k]=0;
+    return snprintf(out,n,"{%s\"token\":\"%s\",\"pin_set\":%s,\"pin_rejected\":%s,\"usb\":\"%s\"}",id,token,pin_set?"true":"false",rejected?"true":"false",esc);
 }
 int proto_ok(char *out,size_t n,const proto_request *r) {
     char id[48];prefix(id,r);return snprintf(out,n,"{%s\"ok\":true}",id);

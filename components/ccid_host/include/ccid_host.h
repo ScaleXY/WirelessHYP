@@ -26,3 +26,5 @@ int ccid_host_power_off(void);
 int ccid_host_slot_status(uint8_t *status);
 int ccid_host_exchange(void *ctx,const uint8_t *tx,size_t txn,uint8_t *rx,size_t *rxn);
 const char *ccid_host_detail(void);
+/* Last enumeration result, for status/diagnostics. Main task only. */
+void ccid_host_diag(bool *installed,int *devices,uint16_t *vid,uint16_t *pid);

@@ -275,6 +275,8 @@ footer { color: var(--muted); font-size: 12.5px; padding: 0 0 28px; }
           <p class="big" id="tok-big">—</p>
           <dl class="kv">
             <dt>PIN</dt><dd id="tok-pin">—</dd>
+            <dt id="tok-usb-dt">USB</dt><dd id="tok-usb">—</dd>
+            <dt id="tok-err-dt" hidden>Last error</dt><dd id="tok-err" hidden></dd>
             <dt>Key x</dt><dd><div class="hex"><code id="tok-qx">—</code><button class="btn ghost sm" data-copy="tok-qx" title="Copy x" aria-label="Copy public key x"><svg width="14" height="14"><use href="#i-copy"/></svg></button></div></dd>
             <dt>Key y</dt><dd><div class="hex"><code id="tok-qy">—</code><button class="btn ghost sm" data-copy="tok-qy" title="Copy y" aria-label="Copy public key y"><svg width="14" height="14"><use href="#i-copy"/></svg></button></div></dd>
           </dl>
@@ -531,6 +533,14 @@ async function loadStatus() {
   const tp = $("tok-pin");
   if (t.pin_rejected) tp.replaceChildren(el("span", { class: "pill bad", text: "Rejected, locked" }), el("div", { class: "muted", style: "font-size:12.5px;margin-top:4px", text: "The device won't try the PIN again. Set a correct one over the serial port with set_pin." }));
   else tp.replaceChildren(el("span", { class: "pill " + (t.pin_set ? "ok" : "warn"), text: t.pin_set ? "Set" : "Not set" }));
+  const u = t.usb || {};
+  const usbLine = u.host === false ? "USB host didn't start"
+    : u.id ? `${u.devices} device${u.devices === 1 ? "" : "s"} · ${u.id}` : `${u.devices || 0} devices`;
+  $("tok-usb").replaceChildren(
+    el("span", { class: "mono", text: usbLine }),
+    t.state === "ready" || !u.detail ? null : el("div", { class: "muted", style: "font-size:12.5px;margin-top:4px", text: u.detail }));
+  $("tok-err").textContent = t.error || "";
+  $("tok-err").hidden = $("tok-err-dt").hidden = !t.error || t.state === "absent";
   $("tok-qx").textContent = t.qx || "—"; $("tok-qx").title = t.qx || "";
   $("tok-qy").textContent = t.qy || "—"; $("tok-qy").title = t.qy || "";
 

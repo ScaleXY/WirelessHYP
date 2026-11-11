@@ -13,5 +13,5 @@ void proto_hex(const uint8_t *p,size_t n,char *out);
 int proto_error(char *out,size_t n,const proto_request *r,bool fatal,const char *error);
 int proto_public(char *out,size_t n,const proto_request *r,bool ready,const uint8_t point[65]);
 int proto_signature(char *out,size_t n,const proto_request *r,const uint8_t sig[64],double ms);
-int proto_status(char *out,size_t n,const proto_request *r,const char *token,bool pin_set,bool rejected);
+int proto_status(char *out,size_t n,const proto_request *r,const char *token,bool pin_set,bool rejected,const char *usb);
 int proto_ok(char *out,size_t n,const proto_request *r);

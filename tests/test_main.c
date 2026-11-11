@@ -51,8 +51,8 @@ static void test_proto(void) {
     for(size_t i=0;i<sizeof(bad)/sizeof(bad[0]);i++) assert(proto_parse(bad[i],&r));
     assert(!proto_parse("{\"id\":7,\"op\":\"set_pin\",\"pin\":\"12\\u003334\"}",&r)&&!strcmp(r.pin,"12334"));
     assert(!proto_parse("{\"id\":4,\"op\":\"status\"}",&r));
-    proto_status(line,sizeof(line),&r,"present",true,false);
-    assert(!strcmp(line,"{\"id\":4,\"token\":\"present\",\"pin_set\":true,\"pin_rejected\":false}"));
+    proto_status(line,sizeof(line),&r,"present",true,false,"x\"y");
+    assert(!strcmp(line,"{\"id\":4,\"token\":\"present\",\"pin_set\":true,\"pin_rejected\":false,\"usb\":\"x\\\"y\"}"));
     proto_error(line,sizeof(line),&r,true,"bad \"PIN\"\n");
     assert(!strcmp(line,"{\"id\":4,\"fatal\":\"pin_rejected\",\"error\":\"bad \\\"PIN\\\"\\u000a\"}"));
     uint8_t sig[64]={0},point[65]={4};sig[31]=1;sig[63]=2;
