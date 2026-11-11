@@ -1,0 +1,36 @@
+name: Build and test
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: espressif/esp-idf-ci-action@v1.2.0
+        with:
+          esp_idf_version: v6.0.2
+          target: esp32s3
+          command: idf.py build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware
+          path: |
+            build/*.bin
+            build/bootloader/bootloader.bin
+            build/partition_table/partition-table.bin
+            build/flasher_args.json
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install OpenSSL
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Obtain pinned reference
+        run: |
+          git clone https://github.com/OpenSC/OpenSC.git /tmp/OpenSC
+          git -C /tmp/OpenSC checkout 3856d69
+      - name: Run host tests
+        env:
+          OPENSC_REFERENCE: /tmp/OpenSC
+        run: tools/run_host_tests.sh

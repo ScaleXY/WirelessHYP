@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.16)
+if(EXISTS "${CMAKE_SOURCE_DIR}/sdkconfig.secrets" AND NOT HYP_NO_SECRETS)
+    set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.secrets")
+else()
+    set(SDKCONFIG_DEFAULTS "sdkconfig.defaults")
+endif()
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(hyp_signer)

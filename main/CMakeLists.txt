@@ -1,0 +1,2 @@
+idf_component_register(SRCS "app.c" "service.c" "transport_uart.c" "web.c" "web_logic.c" "web_cert.c" "json_out.c" INCLUDE_DIRS "." REQUIRES ccid_host epass2003 signer_proto nvs_flash esp_driver_uart esp_timer esp_app_format esp_wifi esp_netif esp_event esp_https_server esp_http_server mbedtls mdns EMBED_TXTFILES "web/index.html")
+target_compile_options(${COMPONENT_LIB} PRIVATE -Wall -Wextra -Werror)

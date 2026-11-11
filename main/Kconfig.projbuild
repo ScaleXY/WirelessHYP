@@ -1,0 +1,37 @@
+menu "HYP2003 signer"
+config HYP_UART_BAUD
+    int "Protocol UART0 baud rate"
+    default 115200
+    range 9600 2000000
+config HYP_SILENT_LOGS
+    bool "Silence application logs"
+    default n
+config HYP_LOG_TX_PIN
+    int "UART1 log TX GPIO (connect a separate adapter)"
+    default 17
+    range 0 48
+    depends on !HYP_SILENT_LOGS
+config HYP_USB_TIMEOUT_MS
+    int "CCID transaction timeout (including time extensions)"
+    default 10000
+    range 1000 60000
+config HYP_DEFAULT_PIN
+    string "Initial PIN (prefer gitignored secrets fragment)"
+    default ""
+config HYP_PUK
+    string "Reserved PUK (not used by firmware)"
+    default ""
+config HYP_WEB_ADMIN_PASSWORD
+    string "Initial web administrator password"
+    default ""
+choice HYP_WEB_HTTP_MODE
+    prompt "HTTP mode"
+    default HYP_WEB_HTTP_REDIRECT
+config HYP_WEB_HTTP_REDIRECT
+    bool "redirect"
+config HYP_WEB_HTTP_SERVE
+    bool "serve"
+config HYP_WEB_HTTP_OFF
+    bool "off"
+endchoice
+endmenu

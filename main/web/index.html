@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>WirelessHYP</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='2' y='5' width='12' height='9' rx='2' fill='%23256f5c'/%3E%3Crect x='5' y='1' width='6' height='5' rx='1' fill='none' stroke='%23256f5c' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #f9f8f5;
+  --line: #e2dfd7;
+  --line-strong: #cdc8bc;
+  --text: #1d1c19;
+  --muted: #6b675e;
+  --accent: #256f5c;
+  --accent-ink: #ffffff;
+  --accent-soft: #e2efea;
+  --ok: #2c7a4b;
+  --ok-soft: #e3f1e8;
+  --warn: #9a6400;
+  --warn-soft: #f8edd6;
+  --bad: #b2362b;
+  --bad-soft: #f8e3e0;
+  --focus: #2f7fd6;
+  --shadow: 0 1px 2px rgb(30 28 24 / 6%), 0 2px 8px rgb(30 28 24 / 4%);
+  --radius: 10px;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141513;
+    --surface: #1c1d1b;
+    --surface-2: #222321;
+    --line: #2f312e;
+    --line-strong: #41443f;
+    --text: #ebe9e4;
+    --muted: #a19d94;
+    --accent: #5cb89c;
+    --accent-ink: #0c1a15;
+    --accent-soft: #1d332c;
+    --ok: #6cc28d;
+    --ok-soft: #1c3124;
+    --warn: #e0ae55;
+    --warn-soft: #362b17;
+    --bad: #ef8378;
+    --bad-soft: #3a201d;
+    --focus: #6aa8f0;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 var(--sans);
+}
+button, input, select { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+.wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+.mono { font-family: var(--mono); font-size: 0.86em; }
+.muted { color: var(--muted); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Top bar */
+header.top { background: var(--surface); border-bottom: 1px solid var(--line); }
+header.top .wrap { display: flex; align-items: center; gap: 12px; min-height: 56px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -0.01em; }
+.brand svg { flex: none; }
+.brand small { font-weight: 450; color: var(--muted); font-family: var(--mono); font-size: 12px; }
+.top .spacer { flex: 1; }
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 36px; padding: 0 14px; border-radius: 8px;
+  border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer;
+  font-weight: 550; font-size: 14px; white-space: nowrap;
+}
+.btn:hover { background: var(--surface-2); }
+.btn:disabled { opacity: .55; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.danger { color: var(--bad); }
+.btn.danger.solid { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn.ghost { border-color: transparent; background: transparent; }
+.btn.ghost:hover { background: var(--surface-2); }
+.btn.sm { min-height: 30px; padding: 0 10px; font-size: 13px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Pills */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px; padding: 2px 9px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600; background: var(--surface-2); color: var(--muted);
+  border: 1px solid var(--line); white-space: nowrap;
+}
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.pill.warn { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.pill.bad { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.pill.plain::before { display: none; }
+
+/* Layout */
+main { padding: 20px 0 48px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); min-width: 0;
+}
+.card > .hd {
+  display: flex; align-items: center; gap: 10px; padding: 14px 16px 0;
+}
+.card > .hd h2 { margin: 0; font-size: 14px; font-weight: 650; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.card > .hd .spacer { flex: 1; }
+.card > .bd { padding: 12px 16px 16px; }
+section.block { margin-top: 26px; }
+section.block > .head { display: flex; align-items: flex-end; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+section.block > .head h2 { margin: 0; font-size: 18px; letter-spacing: -0.01em; }
+section.block > .head p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
+section.block > .head .spacer { flex: 1; }
+
+/* Key-value lists */
+dl.kv { margin: 0; display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 7px 16px; font-size: 14px; }
+dl.kv dt { color: var(--muted); }
+dl.kv dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.big { font-size: 20px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 10px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.hex { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hex code { font-family: var(--mono); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+/* Signal bars */
+.bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; vertical-align: -2px; }
+.bars i { width: 3px; border-radius: 1px; background: var(--line-strong); }
+.bars i:nth-child(1) { height: 25%; } .bars i:nth-child(2) { height: 50%; }
+.bars i:nth-child(3) { height: 75%; } .bars i:nth-child(4) { height: 100%; }
+.bars[data-n="1"] i:nth-child(-n+1), .bars[data-n="2"] i:nth-child(-n+2),
+.bars[data-n="3"] i:nth-child(-n+3), .bars[data-n="4"] i:nth-child(-n+4) { background: var(--accent); }
+
+/* Lists (profiles, scan) */
+.list { list-style: none; margin: 0; padding: 0; }
+.list li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); min-width: 0; }
+.list li:first-child { border-top: 0; }
+.list .main { flex: 1; min-width: 0; }
+.list .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list .meta { color: var(--muted); font-size: 13px; display: flex; gap: 10px; flex-wrap: wrap; margin-top: 1px; }
+.list .acts { display: flex; gap: 4px; flex: none; }
+.prio {
+  flex: none; width: 34px; height: 34px; border-radius: 8px; display: grid; place-items: center;
+  background: var(--surface-2); border: 1px solid var(--line); font: 600 13px var(--mono); color: var(--muted);
+}
+li.active .prio { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+.empty { padding: 26px 16px; text-align: center; color: var(--muted); font-size: 14px; }
+@media (max-width: 560px) {
+  .list li { flex-wrap: wrap; }
+  .list .acts { width: 100%; padding-left: 46px; }
+}
+
+/* Forms */
+.field { display: grid; gap: 5px; margin-bottom: 14px; }
+.field label, .field .lbl { font-size: 13.5px; font-weight: 600; }
+.field .hint { font-size: 12.5px; color: var(--muted); }
+input[type=text], input[type=password], input[type=number] {
+  width: 100%; min-height: 40px; padding: 8px 11px; border-radius: 8px;
+  border: 1px solid var(--line-strong); background: var(--surface);
+}
+input:focus-visible { outline: 2px solid var(--focus); outline-offset: 0; border-color: transparent; }
+input[aria-invalid=true] { border-color: var(--bad); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
+.row { display: flex; gap: 12px; }
+.row > * { flex: 1; min-width: 0; }
+.pw { position: relative; }
+.pw input { padding-right: 64px; }
+.pw button { position: absolute; right: 4px; top: 4px; bottom: 4px; }
+.err { color: var(--bad); font-size: 13.5px; margin: -4px 0 12px; }
+.form-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 6px; }
+
+/* Login */
+.login { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
+.login .card { width: 100%; max-width: 380px; }
+.login .bd { padding: 24px; }
+.login h1 { font-size: 20px; margin: 14px 0 4px; letter-spacing: -0.01em; }
+.login p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
+.login .btn.primary { width: 100%; min-height: 42px; }
+.note { padding: 10px 12px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: 13px; margin-bottom: 16px; }
+
+/* Dialog */
+dialog {
+  border: 1px solid var(--line); border-radius: 12px; padding: 0; width: min(440px, calc(100vw - 32px));
+  background: var(--surface); color: var(--text); box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+}
+dialog::backdrop { background: rgb(20 20 18 / 45%); }
+dialog .dh { display: flex; align-items: center; padding: 16px 20px 0; }
+dialog .dh h3 { margin: 0; font-size: 17px; flex: 1; }
+dialog form { padding: 16px 20px 20px; }
+
+/* Toast */
+#toasts { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); display: grid; gap: 8px; z-index: 50; width: min(420px, calc(100vw - 32px)); }
+.toast { background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 8px; font-size: 14px; box-shadow: 0 6px 20px rgb(0 0 0 / 20%); }
+.toast.bad { background: var(--bad); color: #fff; }
+
+.spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2s; } }
+footer { color: var(--muted); font-size: 12.5px; padding: 0 0 28px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-key" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></g></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1"/></g></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></g></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></g></symbol>
+</svg>
+
+<!-- Login -->
+<div id="login" class="login" hidden>
+  <div class="card">
+    <div class="bd">
+      <svg width="36" height="36" style="color:var(--accent)"><use href="#i-key"/></svg>
+      <h1 id="login-title">WirelessHYP</h1>
+      <p>Sign in to manage Wi-Fi and check the signing token.</p>
+      <div class="note" id="setup-note" hidden>You're connected to the device's setup access point. Add a Wi-Fi profile after signing in so it can join your network.</div>
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="login-pw">Admin password</label>
+          <div class="pw">
+            <input id="login-pw" type="password" autocomplete="current-password" required autofocus>
+            <button type="button" class="btn ghost sm" data-reveal="login-pw">Show</button>
+          </div>
+        </div>
+        <div class="err" id="login-err" role="alert" hidden></div>
+        <button class="btn primary" type="submit" id="login-btn">Sign in</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div id="app" hidden>
+  <header class="top">
+    <div class="wrap">
+      <div class="brand">
+        <svg width="22" height="22" style="color:var(--accent)"><use href="#i-key"/></svg>
+        <span id="dev-name">WirelessHYP</span>
+        <small id="dev-ver"></small>
+      </div>
+      <div class="spacer"></div>
+      <span class="pill" id="top-pill" aria-live="polite">Loading</span>
+      <button class="btn ghost sm" id="logout">Sign out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <div class="card">
+        <div class="hd"><h2>Wi-Fi</h2><div class="spacer"></div><span class="pill plain mono" id="wifi-mode"></span></div>
+        <div class="bd">
+          <p class="big" id="wifi-big">—</p>
+          <dl class="kv">
+            <dt>IP address</dt><dd class="mono" id="wifi-ip">—</dd>
+            <dt>Signal</dt><dd id="wifi-rssi">—</dd>
+            <dt>Setup AP</dt><dd id="wifi-ap">—</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><h2>Token</h2></div>
+        <div class="bd">
+          <p class="big" id="tok-big">—</p>
+          <dl class="kv">
+            <dt>PIN</dt><dd id="tok-pin">—</dd>
+            <dt>Key x</dt><dd><div class="hex"><code id="tok-qx">—</code><button class="btn ghost sm" data-copy="tok-qx" title="Copy x" aria-label="Copy public key x"><svg width="14" height="14"><use href="#i-copy"/></svg></button></div></dd>
+            <dt>Key y</dt><dd><div class="hex"><code id="tok-qy">—</code><button class="btn ghost sm" data-copy="tok-qy" title="Copy y" aria-label="Copy public key y"><svg width="14" height="14"><use href="#i-copy"/></svg></button></div></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <section class="block" aria-labelledby="h-profiles">
+      <div class="head">
+        <div>
+          <h2 id="h-profiles">Wi-Fi profiles</h2>
+          <p>The device joins the highest-priority network it can see. Ties go to the stronger signal.</p>
+        </div>
+        <div class="spacer"></div>
+        <span class="muted" id="prof-count"></span>
+        <button class="btn primary" id="add-profile">Add profile</button>
+      </div>
+      <div class="card">
+        <ul class="list" id="profiles"></ul>
+        <div class="empty" id="profiles-empty" hidden>No profiles yet. Add one, or pick a network from the scan below.</div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-scan">
+      <div class="head">
+        <div>
+          <h2 id="h-scan">Nearby networks</h2>
+          <p>Scanning takes a few seconds.</p>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn" id="scan">Scan</button>
+      </div>
+      <div class="card">
+        <ul class="list" id="networks"></ul>
+        <div class="empty" id="networks-empty">Run a scan to list networks in range.</div>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="h-device">
+      <div class="head"><div><h2 id="h-device">Device</h2></div></div>
+      <div class="grid">
+        <div class="card">
+          <div class="hd"><h2>About</h2></div>
+          <div class="bd">
+            <dl class="kv">
+              <dt>Firmware</dt><dd class="mono" id="d-ver">—</dd>
+              <dt>MAC</dt><dd class="mono" id="d-mac">—</dd>
+              <dt>Uptime</dt><dd id="d-up">—</dd>
+              <dt>HTTP</dt><dd id="d-http">—</dd>
+              <dt>Certificate</dt><dd><div class="hex"><code id="d-cert" title="SHA-256 fingerprint">—</code><button class="btn ghost sm" data-copy="d-cert" title="Copy fingerprint" aria-label="Copy certificate fingerprint"><svg width="14" height="14"><use href="#i-copy"/></svg></button></div></dd>
+            </dl>
+            <p class="muted" style="font-size:12.5px;margin:12px 0 0">The HTTPS certificate is self-signed. To confirm you're talking to this device, check that the fingerprint your browser shows matches this one.</p>
+          </div>
+        </div>
+        <div class="card">
+          <div class="hd"><h2>Admin</h2></div>
+          <div class="bd">
+            <form id="pw-form" novalidate>
+              <div class="field">
+                <label for="pw-cur">Current password</label>
+                <input id="pw-cur" type="password" autocomplete="current-password" required>
+              </div>
+              <div class="field">
+                <label for="pw-new">New password</label>
+                <input id="pw-new" type="password" autocomplete="new-password" minlength="8" maxlength="64" required aria-describedby="pw-hint">
+                <span class="hint" id="pw-hint">8–64 characters. It's also the setup AP's Wi-Fi password, and other sessions are signed out.</span>
+              </div>
+              <div class="err" id="pw-err" role="alert" hidden></div>
+              <div class="form-actions">
+                <button class="btn danger" type="button" id="reboot">Reboot</button>
+                <div style="flex:1"></div>
+                <button class="btn primary" type="submit">Change password</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="wrap">Signing happens over the serial port only. This page can't sign anything or change the token PIN.</footer>
+</div>
+
+<!-- Profile dialog -->
+<dialog id="prof-dlg" aria-labelledby="prof-title">
+  <div class="dh"><h3 id="prof-title">Add profile</h3><button class="btn ghost sm" type="button" data-close aria-label="Close">✕</button></div>
+  <form id="prof-form" method="dialog" novalidate>
+    <div class="field">
+      <label for="p-ssid">Network name (SSID)</label>
+      <input id="p-ssid" type="text" maxlength="32" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+    </div>
+    <div class="field">
+      <label for="p-pw">Password</label>
+      <div class="pw">
+        <input id="p-pw" type="password" autocomplete="new-password" maxlength="63" aria-describedby="p-pw-hint">
+        <button type="button" class="btn ghost sm" data-reveal="p-pw">Show</button>
+      </div>
+      <span class="hint" id="p-pw-hint">8–63 characters.</span>
+    </div>
+    <div class="field">
+      <label class="check"><input type="checkbox" id="p-open"> Open network (no password)</label>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="p-prio">Priority</label>
+        <input id="p-prio" type="number" min="0" max="100" step="1" value="50" inputmode="numeric" aria-describedby="p-prio-hint">
+        <span class="hint" id="p-prio-hint">0–100, higher wins.</span>
+      </div>
+      <div class="field">
+        <span class="lbl">Visibility</span>
+        <label class="check" style="min-height:40px"><input type="checkbox" id="p-hidden"> Hidden SSID</label>
+      </div>
+    </div>
+    <div class="err" id="p-err" role="alert" hidden></div>
+    <div class="form-actions">
+      <button class="btn" type="button" data-close>Cancel</button>
+      <button class="btn primary" type="submit" id="p-save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Confirm dialog -->
+<dialog id="confirm-dlg" aria-labelledby="confirm-title">
+  <div class="dh"><h3 id="confirm-title">Are you sure?</h3></div>
+  <form method="dialog">
+    <p id="confirm-text" style="margin:0 0 16px;color:var(--muted)"></p>
+    <div class="form-actions">
+      <button class="btn" value="cancel">Cancel</button>
+      <button class="btn danger solid" value="ok" id="confirm-ok">Confirm</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const state = { status: null, profiles: [], max: 8, networks: null, editing: null, timer: 0 };
+
+/* ---------- API ---------- */
+class ApiError extends Error {
+  constructor(status, body) { super((body && body.error) || ("HTTP " + status)); this.status = status; this.body = body; }
+}
+async function api(method, path, body) {
+  const opt = { method, credentials: "same-origin", headers: {} };
+  if (method !== "GET") opt.headers["X-HYP"] = "1";
+  if (body !== undefined) { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+  let res;
+  try { res = await fetch(path, opt); }
+  catch { throw new ApiError(0, { error: "Can't reach the device" }); }
+  let data = null;
+  try { data = await res.json(); } catch { /* empty body */ }
+  /* Only a missing/expired session logs out; a wrong "current" password is also 401. */
+  if (res.status === 401 && data && data.error === "unauthorized") { showLogin(); throw new ApiError(401, data); }
+  if (!res.ok) throw new ApiError(res.status, data);
+  return data;
+}
+
+/* ---------- helpers ---------- */
+function toast(msg, bad) {
+  const t = document.createElement("div");
+  t.className = "toast" + (bad ? " bad" : "");
+  t.textContent = msg;
+  $("toasts").appendChild(t);
+  setTimeout(() => t.remove(), bad ? 6000 : 3200);
+}
+function setErr(el, msg) { el.textContent = msg || ""; el.hidden = !msg; }
+function el(tag, props, ...kids) {
+  const n = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) n.setAttribute(k, v === true ? "" : v);
+  }
+  for (const k of kids) if (k != null) n.append(k);
+  return n;
+}
+function bars(rssi) {
+  const n = rssi == null ? 0 : rssi >= -55 ? 4 : rssi >= -67 ? 3 : rssi >= -78 ? 2 : 1;
+  const b = el("span", { class: "bars", "data-n": n, "aria-hidden": "true" });
+  for (let i = 0; i < 4; i++) b.append(el("i"));
+  return b;
+}
+function quality(rssi) {
+  return rssi >= -55 ? "Excellent" : rssi >= -67 ? "Good" : rssi >= -78 ? "Fair" : "Weak";
+}
+function uptime(s) {
+  const d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60);
+  return d ? `${d}d ${h}h ${m}m` : h ? `${h}h ${m}m` : `${m}m ${Math.floor(s % 60)}s`;
+}
+function pill(node, cls, text) { node.className = "pill " + cls; node.textContent = text; }
+function busy(btn, on, label) {
+  if (on) { btn.dataset.label = btn.textContent; btn.disabled = true; btn.replaceChildren(el("span", { class: "spin", "aria-hidden": "true" }), label || btn.dataset.label); }
+  else { btn.disabled = false; btn.textContent = btn.dataset.label || btn.textContent; }
+}
+async function confirmBox(title, text, okLabel) {
+  $("confirm-title").textContent = title;
+  $("confirm-text").textContent = text;
+  $("confirm-ok").textContent = okLabel || "Confirm";
+  const d = $("confirm-dlg");
+  d.returnValue = "";
+  d.showModal();
+  return new Promise((r) => d.addEventListener("close", () => r(d.returnValue === "ok"), { once: true }));
+}
+
+/* ---------- screens ---------- */
+function showLogin(setupAp) {
+  clearInterval(state.timer);
+  $("app").hidden = true;
+  $("login").hidden = false;
+  if (setupAp !== undefined) $("setup-note").hidden = !setupAp;
+  $("login-pw").value = "";
+  $("login-pw").focus();
+}
+async function showApp() {
+  $("login").hidden = true;
+  $("app").hidden = false;
+  await Promise.allSettled([loadStatus(), loadProfiles()]);
+  clearInterval(state.timer);
+  state.timer = setInterval(() => { if (!document.hidden) loadStatus(); }, 5000);
+}
+
+/* ---------- status ---------- */
+async function loadStatus() {
+  let s;
+  try { s = await api("GET", "/api/status"); }
+  catch (e) { if (e.status !== 401) pill($("top-pill"), "bad", "Offline"); return; }
+  state.status = s;
+  const w = s.wifi, t = s.token, d = s.device;
+  document.title = d.name;
+  $("dev-name").textContent = d.name;
+  $("login-title").textContent = d.name;
+  $("dev-ver").textContent = d.version;
+
+  if (t.pin_rejected) pill($("top-pill"), "bad", "PIN locked");
+  else if (t.state === "ready" && w.connected) pill($("top-pill"), "ok", "Ready");
+  else if (t.state === "ready") pill($("top-pill"), "warn", "Token ready · no Wi-Fi");
+  else pill($("top-pill"), "warn", t.state === "absent" ? "No token" : "Token not ready");
+
+  $("wifi-mode").textContent = w.mode.toUpperCase();
+  const wb = $("wifi-big");
+  if (w.connected) wb.replaceChildren(el("span", { text: w.ssid }), el("span", { class: "pill ok", text: "Connected" }));
+  else wb.replaceChildren(el("span", { text: "Not connected" }), el("span", { class: "pill warn", text: w.ap_active ? "Setup AP on" : "Searching" }));
+  $("wifi-ip").textContent = w.ip || "—";
+  if (w.rssi != null) $("wifi-rssi").replaceChildren(bars(w.rssi), ` ${quality(w.rssi)} (${w.rssi} dBm)`);
+  else $("wifi-rssi").textContent = "—";
+  $("wifi-ap").textContent = w.ap_active ? `${w.ap_ssid}${w.ap_ip ? " · " + w.ap_ip : ""}` : "Off";
+
+  const tb = $("tok-big");
+  const tokLabel = { ready: ["ok", "Ready to sign"], present: ["warn", "Plugged in, not open"], absent: ["bad", "Not plugged in"] }[t.state] || ["warn", t.state];
+  tb.replaceChildren(el("span", { text: "HYP2003" }), el("span", { class: "pill " + tokLabel[0], text: tokLabel[1] }));
+  const tp = $("tok-pin");
+  if (t.pin_rejected) tp.replaceChildren(el("span", { class: "pill bad", text: "Rejected, locked" }), el("div", { class: "muted", style: "font-size:12.5px;margin-top:4px", text: "The device won't try the PIN again. Set a correct one over the serial port with set_pin." }));
+  else tp.replaceChildren(el("span", { class: "pill " + (t.pin_set ? "ok" : "warn"), text: t.pin_set ? "Set" : "Not set" }));
+  $("tok-qx").textContent = t.qx || "—"; $("tok-qx").title = t.qx || "";
+  $("tok-qy").textContent = t.qy || "—"; $("tok-qy").title = t.qy || "";
+
+  $("d-ver").textContent = d.version;
+  $("d-mac").textContent = d.mac;
+  $("d-up").textContent = uptime(d.uptime_s);
+  $("d-http").textContent = { redirect: "Redirects to HTTPS", serve: "Also served over plain HTTP", off: "Off (HTTPS only)" }[s.web.http_mode] || s.web.http_mode;
+  $("d-cert").textContent = s.web.cert_sha256 || "—"; $("d-cert").title = s.web.cert_sha256 || "";
+
+  for (const p of state.profiles) p.active = !!(w.connected && w.ssid === p.ssid);
+  renderProfiles();
+}
+
+/* ---------- profiles ---------- */
+async function loadProfiles() {
+  try {
+    const r = await api("GET", "/api/wifi/profiles");
+    state.profiles = r.profiles; state.max = r.max;
+    renderProfiles(); renderNetworks();
+  } catch (e) { if (e.status !== 401) toast("Couldn't load profiles: " + e.message, true); }
+}
+function renderProfiles() {
+  const list = $("profiles");
+  const ps = [...state.profiles].sort((a, b) => b.priority - a.priority || a.ssid.localeCompare(b.ssid));
+  list.replaceChildren(...ps.map((p) => {
+    const meta = el("div", { class: "meta" },
+      el("span", { text: p.has_password ? "Password saved" : "Open" }),
+      p.hidden ? el("span", { text: "Hidden" }) : null,
+      p.active ? el("span", { style: "color:var(--ok);font-weight:600", text: "Connected" }) : null);
+    return el("li", { class: p.active ? "active" : "" },
+      el("div", { class: "prio", title: "Priority", text: String(p.priority) }),
+      el("div", { class: "main" }, el("div", { class: "name", text: p.ssid, title: p.ssid }), meta),
+      el("div", { class: "acts" },
+        p.active ? null : el("button", { class: "btn sm", text: "Connect", onclick: (e) => connect(p, e.currentTarget) }),
+        el("button", { class: "btn ghost sm", text: "Edit", onclick: () => openProfile(p) }),
+        el("button", { class: "btn ghost sm danger", text: "Delete", onclick: () => removeProfile(p) })));
+  }));
+  $("profiles-empty").hidden = ps.length > 0;
+  $("prof-count").textContent = `${ps.length} of ${state.max}`;
+  $("add-profile").disabled = ps.length >= state.max;
+}
+function openProfile(p, ssid) {
+  state.editing = p || null;
+  $("prof-title").textContent = p ? "Edit profile" : "Add profile";
+  $("p-ssid").value = p ? p.ssid : (ssid || "");
+  $("p-pw").value = "";
+  $("p-pw").type = "password";
+  $("p-open").checked = p ? !p.has_password : false;
+  $("p-prio").value = p ? p.priority : 50;
+  $("p-hidden").checked = p ? p.hidden : false;
+  $("p-pw").placeholder = p && p.has_password ? "Leave blank to keep the saved password" : "";
+  setErr($("p-err"));
+  syncOpen();
+  $("prof-dlg").showModal();
+  (ssid || p ? $("p-pw") : $("p-ssid")).focus();
+}
+function syncOpen() {
+  const open = $("p-open").checked;
+  $("p-pw").disabled = open;
+  if (open) $("p-pw").value = "";
+}
+$("p-open").addEventListener("change", syncOpen);
+
+$("prof-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const p = state.editing;
+  const ssid = $("p-ssid").value;
+  const pw = $("p-pw").value;
+  const open = $("p-open").checked;
+  const prio = Number($("p-prio").value);
+  for (const i of ["p-ssid", "p-pw", "p-prio"]) $(i).removeAttribute("aria-invalid");
+  const bad = (id, msg) => { $(id).setAttribute("aria-invalid", "true"); $(id).focus(); setErr($("p-err"), msg); };
+  const ssidBytes = new TextEncoder().encode(ssid).length;
+  if (!ssid || ssidBytes > 32) return bad("p-ssid", "Enter a network name of 1–32 bytes.");
+  if (!Number.isInteger(prio) || prio < 0 || prio > 100) return bad("p-prio", "Priority must be a whole number from 0 to 100.");
+  const keep = p && p.has_password && !open && pw === "";
+  if (!open && !keep && (pw.length < 8 || pw.length > 63)) return bad("p-pw", "The password must be 8–63 characters, or tick Open network.");
+
+  const body = { ssid, priority: prio, hidden: $("p-hidden").checked };
+  if (open) body.password = "";
+  else if (!keep) body.password = pw;
+  const btn = $("p-save");
+  busy(btn, true, "Saving");
+  try {
+    if (p) await api("PUT", `/api/wifi/profiles/${p.id}`, body);
+    else await api("POST", "/api/wifi/profiles", Object.assign({ password: "" }, body));
+    $("prof-dlg").close();
+    toast(p ? "Profile updated" : "Profile added");
+    await loadProfiles();
+  } catch (err) {
+    if (err.status !== 401) setErr($("p-err"), err.message);
+  } finally { busy(btn, false); }
+});
+
+async function removeProfile(p) {
+  const msg = p.active ? `The device is connected to ${p.ssid} now and will drop off this network.` : `The saved settings for ${p.ssid} will be removed.`;
+  if (!(await confirmBox("Delete profile?", msg, "Delete"))) return;
+  try { await api("DELETE", `/api/wifi/profiles/${p.id}`); toast("Profile deleted"); await loadProfiles(); }
+  catch (e) { if (e.status !== 401) toast(e.message, true); }
+}
+async function connect(p, btn) {
+  if (state.status && state.status.wifi.connected &&
+      !(await confirmBox(`Switch to ${p.ssid}?`, `The device will leave ${state.status.wifi.ssid}. If this page is reached over that network, it will disconnect.`, "Switch"))) return;
+  busy(btn, true, "Connecting");
+  try { await api("POST", "/api/wifi/connect", { id: p.id }); toast(`Connecting to ${p.ssid}…`); setTimeout(loadStatus, 4000); }
+  catch (e) { if (e.status !== 401) toast(e.message, true); }
+  finally { busy(btn, false); }
+}
+$("add-profile").addEventListener("click", () => openProfile());
+
+/* ---------- scan ---------- */
+function renderNetworks() {
+  if (!state.networks) return;
+  const known = new Set(state.profiles.map((p) => p.ssid));
+  const ns = [...state.networks].sort((a, b) => b.rssi - a.rssi);
+  $("networks").replaceChildren(...ns.map((n) => {
+    const isKnown = known.has(n.ssid);
+    return el("li", null,
+      bars(n.rssi),
+      el("div", { class: "main" },
+        el("div", { class: "name", text: n.ssid, title: n.ssid }),
+        el("div", { class: "meta" },
+          el("span", { text: n.auth === "open" ? "Open" : n.auth.toUpperCase() }),
+          el("span", { text: `${n.rssi} dBm` }),
+          el("span", { text: `Ch ${n.channel}` }))),
+      el("div", { class: "acts" },
+        isKnown ? el("span", { class: "pill ok", text: "Saved" })
+          : n.auth === "enterprise" || n.auth === "wep"
+            ? el("span", { class: "pill plain", text: "Unsupported" })
+            : el("button", { class: "btn sm", text: "Add", onclick: () => openProfile(null, n.ssid) })));
+  }));
+  $("networks-empty").hidden = ns.length > 0;
+  $("networks-empty").textContent = "No networks found. Try scanning again.";
+}
+$("scan").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  busy(btn, true, "Scanning");
+  try { const r = await api("GET", "/api/wifi/scan"); state.networks = r.networks; renderNetworks(); }
+  catch (err) { if (err.status !== 401) toast("Scan failed: " + err.message, true); }
+  finally { busy(btn, false); }
+});
+
+/* ---------- auth ---------- */
+let lockTimer = 0;
+$("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const pw = $("login-pw").value;
+  if (!pw) { setErr($("login-err"), "Enter the admin password."); return; }
+  const btn = $("login-btn");
+  busy(btn, true, "Signing in");
+  try {
+    await api("POST", "/api/login", { password: pw });
+    setErr($("login-err"));
+    busy(btn, false);
+    await showApp();
+  } catch (err) {
+    busy(btn, false);
+    if (err.status === 429) {
+      let left = (err.body && err.body.retry_after) || 60;
+      btn.disabled = true;
+      clearInterval(lockTimer);
+      const tick = () => {
+        if (left <= 0) { clearInterval(lockTimer); btn.disabled = false; setErr($("login-err")); return; }
+        setErr($("login-err"), `Too many attempts. Try again in ${left--} s.`);
+      };
+      tick(); lockTimer = setInterval(tick, 1000);
+    } else setErr($("login-err"), err.status === 401 ? "That password isn't right." : err.message);
+    $("login-pw").select();
+  }
+});
+$("logout").addEventListener("click", async () => {
+  try { await api("POST", "/api/logout"); } catch { /* ignore */ }
+  showLogin();
+});
+
+/* ---------- admin ---------- */
+$("pw-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const cur = $("pw-cur").value, nw = $("pw-new").value;
+  if (!cur) { setErr($("pw-err"), "Enter the current password."); $("pw-cur").focus(); return; }
+  if (nw.length < 8 || nw.length > 64) { setErr($("pw-err"), "The new password must be 8–64 characters."); $("pw-new").focus(); return; }
+  try {
+    await api("POST", "/api/admin/password", { current: cur, new: nw });
+    setErr($("pw-err")); $("pw-cur").value = ""; $("pw-new").value = "";
+    toast("Password changed");
+  } catch (err) {
+    if (err.body && err.body.error === "unauthorized") return;
+    setErr($("pw-err"), err.status === 401 ? "The current password isn't right." : err.message);
+  }
+});
+$("reboot").addEventListener("click", async () => {
+  if (!(await confirmBox("Reboot the device?", "Signing and this page will be unavailable for about 10 seconds.", "Reboot"))) return;
+  try { await api("POST", "/api/reboot"); toast("Rebooting…"); pill($("top-pill"), "warn", "Rebooting"); }
+  catch (e) { if (e.status !== 401) toast(e.message, true); }
+});
+
+/* ---------- misc ---------- */
+document.addEventListener("click", (e) => {
+  const r = e.target.closest("[data-reveal]");
+  if (r) { const i = $(r.dataset.reveal); const show = i.type === "password"; i.type = show ? "text" : "password"; r.textContent = show ? "Hide" : "Show"; return; }
+  const c = e.target.closest("[data-copy]");
+  if (c) {
+    const v = $(c.dataset.copy).title || $(c.dataset.copy).textContent;
+    if (!v || v === "—") return;
+    (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(() => toast("Copied"), () => toast("Copy isn't available here", true));
+    return;
+  }
+  if (e.target.closest("[data-close]")) e.target.closest("dialog").close();
+});
+
+(async function init() {
+  try {
+    const s = await api("GET", "/api/session");
+    if (s.authenticated) await showApp(); else showLogin(s.setup_ap);
+  } catch { showLogin(); setErr($("login-err"), "Can't reach the device."); }
+})();
+})();
+</script>
+</body>
+</html>
