@@ -145,7 +145,9 @@ static void test_pin_apdu(void) {
 }
 static size_t t1_reply(uint8_t pcb,const uint8_t *p,size_t n,uint8_t *out) {
     out[0]=0;out[1]=pcb;out[2]=(uint8_t)n;memcpy(out+3,p,n);uint8_t lrc=0;
-    for(size_t i=0;i<n+3;i++)lrc^=out[i];out[n+3]=lrc;return n+4;
+    for(size_t i=0;i<n+3;i++) lrc^=out[i];
+    out[n+3]=lrc;
+    return n+4;
 }
 static unsigned t1_calls;
 static int t1_mock(void *ctx,const uint8_t *tx,size_t n,uint8_t *rx,size_t *rn) {
