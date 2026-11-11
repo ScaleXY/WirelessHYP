@@ -13,6 +13,21 @@ ESP-IDF 6.0.2 firmware for an ESP32-S3 using its native USB OTG controller as a 
 
 IDF's primary and secondary consoles are disabled and bootloader logs are disabled. The immutable ROM reset/download banner may still appear on UART0. It is ordinary text, never protocol JSON. Consumers must ignore non-JSON lines. Application output on UART0 consists only of complete JSON lines; no PIN, private key, or SM session key is logged. Do not use `idf.py monitor` and the test script on the same serial port simultaneously.
 
+## Flashing a prebuilt image
+
+CI publishes `wirelesshyp-esp32s3-flash-at-0x0` (`merged-flash.bin`), which holds the bootloader, partition table and app. Write it at **offset 0x0**:
+
+```sh
+python -m esptool --chip esp32s3 -b 460800 erase-flash   # optional, first install only: wipes NVS
+python -m esptool --chip esp32s3 -b 460800 write-flash 0x0 merged-flash.bin
+```
+
+Web flashers (ESP Web Tools, Espressif's online flasher) also want the merged file at 0x0. If you use the separate parts instead, the offsets are: `bootloader.bin` at `0x0`, `partition-table.bin` at `0x8000`, `hyp_signer.bin` at `0x20000`.
+
+**Symptom of a wrong offset:** if `hyp_signer.bin` is written at 0x0, the boot log shows `load:0x3c0c0020,...`, then `SHA-256 comparison failed`, then a `TG0WDT_SYS_RST` reset loop. The ROM is loading the app without the second-stage bootloader. Reflash as shown above.
+
+CI images have no secrets compiled in, so after flashing, provision the device over UART0: `{"id":1,"op":"set_admin_password","password":"…"}` (this enables the SoftAP and web UI), then `{"id":2,"op":"set_pin","pin":"…"}`. Erasing the flash also clears the PIN-rejected latch. Only erase if you know the stored PIN state.
+
 ## Build and flash
 
 ```sh
@@ -145,7 +160,7 @@ Tests always run frozen synthetic vectors generated against OpenSC 3856d69. To r
 
 Coverage includes DES/AES/SHA known answers, CMAC (RFC 4493), AES/3DES session derivation and card cryptograms, ten wrapped APDUs and two independently encrypted/MACed responses, MAC/SW tampering, CCID framing/errors/extensions/chaining, T=1 I/R/WTX/CRC, bounded DER/PKCS#15 key and PIN-reference parsing, exact PIN/signing APDUs, digest/JSON validation/formatting, low-s boundaries, and a mock-backed persistent-marker test across open/replug/reboot and storage failures. No physical token PIN is used by any native test.
 
-Run the commands above for current build/test output and image size. Generated result logs are not tracked. `build/hyp_signer.bin` is the flashable app (bootloader and partition table are also needed; use `idf.py flash`).
+Run the commands above for current build/test output and image size. Generated result logs are not tracked. `build/hyp_signer.bin` is the app only, so it must go at `0x20000`. See [Flashing a prebuilt image](#flashing-a-prebuilt-image).
 
 ## Open hardware doubts and limits
 

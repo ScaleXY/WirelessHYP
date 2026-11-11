@@ -11,12 +11,20 @@ jobs:
         with:
           esp_idf_version: v6.0.2
           target: esp32s3
-          command: idf.py build
+          command: idf.py build && idf.py merge-bin -o merged-flash.bin
+      # Single image containing bootloader + partition table + app.
+      # Write it at offset 0x0. Writing hyp_signer.bin (app only) at 0x0
+      # makes the ROM load the app without a bootloader and watchdog-reset loop.
       - uses: actions/upload-artifact@v4
         with:
-          name: firmware
+          name: wirelesshyp-esp32s3-flash-at-0x0
+          path: build/merged-flash.bin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: firmware-parts
           path: |
             build/*.bin
+            !build/merged-flash.bin
             build/bootloader/bootloader.bin
             build/partition_table/partition-table.bin
             build/flasher_args.json
